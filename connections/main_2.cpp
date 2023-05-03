@@ -2,14 +2,6 @@
 // 03.05.2023
 
 #include<WiFi.h>
-#include<Adafruit_MQTT.h>
-#include<Adafruit_MQTT_Client.h>
-#include<Servo.h>
-
-#define ultra_input_pin 18 //D18 == 18 
-#define servo_1_pin 19
-#define servo_2_pin 21
-#define testing_pin 23
 
 #define WIFI_SSID_1 "Pritam_2.4GHz"
 #define WIFI_PWD_1 "Micronet-0-"
@@ -29,27 +21,12 @@ IPAddress dns2(4,2,2,2);
 
 WiFiClient myNetwork;
 
-Servo Bin_1;
-Servo Bin_2;
-
-#define AIO_SERVER      "192.168.23.105" //IP address of Local Server
-#define AIO_SERVERPORT  1883 // use 8883 for SSL
-#define AIO_USERNAME    ""
-#define AIO_KEY         ""
-
-Adafruit_MQTT_Client mqtt(&myNetwork, AIO_SERVER, AIO_SERVERPORT, AIO_USERNAME, AIO_KEY);
-
-Adafruit_MQTT_Publish Test_Pub = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/test_pub");
-
-Adafruit_MQTT_Subscribe ML_Verdict = Adafruit_MQTT_Subscribe(&mqtt, AIO_USERNAME "/feeds/ml_result");
-
-//void MQTT_Client();
 void Wifi_Connect();
 
 void setup() {
     Serial.begin(115200);
     delay(10);
-    pinMode(testing_pin,OUTPUT);
+    
     pinMode(LED_BUILTIN,OUTPUT);
     //Scan WiFi
     Serial.println("Scanning for available networks...");
