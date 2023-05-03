@@ -4,11 +4,11 @@
 #include<WiFi.h>
 
 #define WIFI_SSID_1 "Pritam_2.4GHz"
-#define WIFI_PWD_1 "Micronet-0-"
+#define WIFI_PWD_1 "########"
 IPAddress ip1(192,168,0,120);
 IPAddress gateway1(192,168,0,1);
 #define WIFI_SSID_2 "A1_Plus"
-#define WIFI_PWD_2 "pritampritam"
+#define WIFI_PWD_2 "########"
 IPAddress ip2(192,168,43,120);
 IPAddress gateway2(192,168,43,1);
 #define WIFI_SSID_3 "TP-Link_Extender"
@@ -26,7 +26,7 @@ void Wifi_Connect();
 void setup() {
     Serial.begin(115200);
     delay(10);
-    
+
     pinMode(LED_BUILTIN,OUTPUT);
     //Scan WiFi
     Serial.println("Scanning for available networks...");
