@@ -18,12 +18,11 @@ import paho.mqtt.client as mqtt_client
 
 MODELSPATH = 'bin_witha_brain_modelf.h5'
 DATAPATH = 'waste1.jpg'  # sample image
-mqtt_Broker = ""  # localhost ip(use pc mainframe ip)
+mqtt_Broker = "192.168.23.105"  # localhost ip(use pc mainframe ip)
 client = mqtt_client.Client("Mainframe") # Client name Mainframe
 # client.connect(mqtt_Broker) # uncomment after setting mqtt_Broker
-topic_1 = "Detection Biodegradable"  # topic for publishing if biodegradable
-topic_2 = "Detection Non-Biodegradable"  # topic for publishing if non-biodegradable
-
+topic = "/feeds/ml_result"
+client.connect(mqtt_Broker,1883)
 i = 0
 
 
@@ -67,7 +66,7 @@ def load_data():
 
 
 def load_models():
-    model = tf.keras.saving.load_model(MODELSPATH, compile=False)
+    model = keras.models.load_model(MODELSPATH, compile=False)
     return model
 
 
@@ -98,11 +97,11 @@ if page == "Sample Data to Test App":
             st.write(result)
             if result[0][0] > 0.65:
                 prediction = 'Recyclable/Non-Biodegradable Waste'
-                client.publish(topic_2, "Open")
+                client.publish(topic, 1)
 
             else:
                 prediction = 'Organic/Biodegradable Waste'
-                client.publish(topic_1, "Open")
+                client.publish(topic, 2)
             st.write(prediction)
             st.success("It is prediction for sample image and the app is working")
 
@@ -163,14 +162,14 @@ elif page == "Use Camera to Upload Image and Report Wastes":
             st.write(result)
             if result[0][0] > 0.65:  # based on confusion matrix[0][0]
                 prediction = 'Recyclable/Non-Biodegradable Waste'
-                client.publish(topic_2, "Open")
+                client.publish(topic, 1)
                 token = random.randint(100000, 99999999999)
                 token = str(token)
                 token = 'Token number is:' + str(token)
                 filename = funcs('default.jpg', prediction, token)
             else:
                 prediction = 'Organic/Biodegradable Waste'
-                client.publish(topic_1, "Open")
+                client.publish(topic, 2)
                 token = random.randint(100000, 99999999999)
                 token = str(token)
                 token = 'Token number is:' + str(token)

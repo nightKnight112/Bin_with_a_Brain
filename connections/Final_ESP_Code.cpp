@@ -127,7 +127,7 @@ void loop(){
               delay(900);
             }
             Serial.println();
-            Bin1_Close();
+            Bin2_Close();
             Serial.println("Bin 2 Closed");
           }
       }
@@ -234,22 +234,28 @@ float get_ultra_data(){
   return distance;
 }
 void Bin1_Open() {
-  int position = 100;
-  Bin_1.write(position);
-  delay(20);
+  for (int pos = 0; pos <= 90; pos += 1) {
+    // in steps of 1 degree
+    Bin_1.write(pos);
+    delay(15); // waits 15ms to reach the position
+  }
 }
 void Bin2_Open() {
-  int position = 100;
-  Bin_2.write(position);
-  delay(20);
+  for (int pos = 0; pos <= 90; pos += 1) {
+    // in steps of 1 degree
+    Bin_2.write(pos);
+    delay(15); // waits 15ms to reach the position
+  }
 }
 void Bin1_Close() {
-  int position = 0;
-  Bin_1.write(position);
-  delay(20);
+  for (int pos = 90; pos >= 0; pos -= 1) {
+    Bin_1.write(pos);
+    delay(15); // waits 15ms to reach the position
+  }
 }
 void Bin2_Close() {
-  int position = 0;
-  Bin_2.write(position);
-  delay(20);
+  for (int pos = 90; pos >= 0; pos -= 1) {
+    Bin_2.write(pos);
+    delay(15); // waits 15ms to reach the position
+  }
 }
