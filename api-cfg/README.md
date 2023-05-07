@@ -25,9 +25,9 @@ pip install keras
 pip install streamlit
 pip install pillow
 ```
-Next download the project files to your system, then go to the folder/directory where these files reside and run the script:
+Next download the project files to your system, then go to the folder/directory where these files(app.py) reside and run the script:
 ```
-streamlit run app.py
+python -m streamlit run app.py
 ```
 
 
