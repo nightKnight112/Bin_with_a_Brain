@@ -18,7 +18,7 @@ import paho.mqtt.client as mqtt_client
 
 MODELSPATH = 'bin_witha_brain_modelf.h5'
 DATAPATH = 'waste1.jpg'  # sample image
-mqtt_Broker = "192.168.23.105"  # localhost ip(use pc mainframe ip)
+mqtt_Broker = "192.168.43.105"  # localhost ip(use pc mainframe ip)
 client = mqtt_client.Client("Mainframe") # Client name Mainframe
 # client.connect(mqtt_Broker) # uncomment after setting mqtt_Broker
 topic = "/feeds/ml_result"
