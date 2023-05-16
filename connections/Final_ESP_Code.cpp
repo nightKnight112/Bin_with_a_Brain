@@ -4,14 +4,15 @@
 #include<WiFi.h>
 #include<Adafruit_MQTT.h>
 #include<Adafruit_MQTT_Client.h>
-#include<Servo.h>
+#include<ESP32Servo.h>
 
 #define ultra_trig_pin 5 //D18 == 18 | output
 #define ultra_echo_pin 18 // input
 #define servo_1_pin 19
 #define servo_2_pin 21
-#define testing_pin 23
-#define testing_pin2 4
+#define MQTT_Status_Pin 4
+
+#define degree 110
 
 #define WIFI_SSID_1 "Pritam_2.4GHz"
 #define WIFI_PWD_1 "Micronet-0-"
@@ -34,7 +35,7 @@ WiFiClient myNetwork;
 Servo Bin_1;
 Servo Bin_2;
 
-#define AIO_SERVER      "192.168.23.105" //IP address of Local Server
+#define AIO_SERVER      "192.168.0.105" //IP address of Local Server
 #define AIO_SERVERPORT  1883 // use 8883 for SSL
 #define AIO_USERNAME    ""
 #define AIO_KEY         ""
@@ -42,6 +43,7 @@ Servo Bin_2;
 Adafruit_MQTT_Client mqtt(&myNetwork, AIO_SERVER, AIO_SERVERPORT, AIO_USERNAME, AIO_KEY);
 
 Adafruit_MQTT_Publish Obj_Distance = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/Obj_distance_pub");
+Adafruit_MQTT_Publish Monitor = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/log_monitor");
 
 Adafruit_MQTT_Subscribe ML_Verdict = Adafruit_MQTT_Subscribe(&mqtt, AIO_USERNAME "/feeds/ml_result");
 
@@ -56,8 +58,8 @@ float get_ultra_data();
 void setup() {
     Serial.begin(115200);
     delay(10);
-    pinMode(testing_pin,OUTPUT);
-    pinMode(testing_pin2,OUTPUT);
+
+    pinMode(MQTT_Status_Pin,OUTPUT);
     pinMode(LED_BUILTIN,OUTPUT);
 
     pinMode(ultra_echo_pin,INPUT);
@@ -81,11 +83,13 @@ void loop(){
     distance = get_ultra_data();
     Serial.print("Got Distance: ");
     Serial.println(distance);
+    int new_distance = static_cast<int>(distance);
+    
     // Publishing Ultrasonic Data
-    if(distance<=30.0){
-      if (Obj_Distance.publish(distance)) {
+    if(distance<=30.0 and distance>0.00){
+      if (Obj_Distance.publish(new_distance)) {
       Serial.print("Published object distance : ");
-      Serial.println(distance);
+      Serial.println(new_distance);
       delay(500);
       }
       else {
@@ -94,17 +98,19 @@ void loop(){
       }
     }
     Adafruit_MQTT_Subscribe *subscription;
-    while(subscription = mqtt.readSubscription(10000)) {
+    while(subscription = mqtt.readSubscription(3000)) {
       
       if (subscription == &ML_Verdict) {
           Serial.print("Got ML Verdict for Bin: ");
           Serial.println((char *)ML_Verdict.lastread);
           int ML_Verdict_State = atoi((char *)ML_Verdict.lastread);
           if(ML_Verdict_State == 1) {
+            
             Serial.println("In-organic waste detected. Opening Bin 1...");
             Bin1_Open();
             delay(1000);
             Serial.println("Bin 1 Opened. Dump your waste! Bin will be closed in 20 sec");
+            Monitor.publish("Bin 1 Opened...");
             Serial.print("Bin 1 closing in...  ");
             for(int k=20;k>=1;k--){
               Serial.print(k);
@@ -114,12 +120,15 @@ void loop(){
             Serial.println();
             Bin1_Close();
             Serial.println("Bin 1 Closed");
+            Monitor.publish("Bin 1 Closed...");
+            delay(3000);
           }
           else if(ML_Verdict_State == 2) {
             Serial.println("Organic waste detected. Opening Bin 2...");
             Bin2_Open();
             delay(900);
             Serial.println("Bin 2 Opened. Dump your waste! Bin will be closed in 20 sec");
+            Monitor.publish("Bin 2 Opened...");
             Serial.print("Bin 2 closing in...  ");
             for(int k=20;k>=1;k--){
               Serial.print(k);
@@ -129,6 +138,8 @@ void loop(){
             Serial.println();
             Bin2_Close();
             Serial.println("Bin 2 Closed");
+            Monitor.publish("Bin 2 Closed...");
+            delay(3000);
           }
       }
     }
@@ -154,16 +165,20 @@ void MQTT_Connect() {
   while ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
     Serial.println(mqtt.connectErrorString(ret));
     Serial.println("Retrying MQTT connection in 5 seconds...");
+    Monitor.publish("MQTT Connection Failed. Retrying...");
     mqtt.disconnect();
+    digitalWrite(MQTT_Status_Pin,LOW);
     delay(5000);  // wait 5 seconds
     retries--;
     if (retries == 0) {
+      digitalWrite(MQTT_Status_Pin,LOW);
       // basically die and wait for WDT to reset me
       while (1);
     }
   }
-  digitalWrite(testing_pin,HIGH);
+  digitalWrite(MQTT_Status_Pin,HIGH);
   Serial.println("MQTT Connected!");
+  Monitor.publish("MQTT Connected");
 }
 
 void Wifi_Connect(){
@@ -202,6 +217,7 @@ void Wifi_Connect(){
             Serial.println();
             digitalWrite(LED_BUILTIN,HIGH);
             Serial.print("WiFi connected to ");
+            Monitor.publish("Wifi connected.");
             Serial.println(WiFi.SSID());
             Serial.println("IP address: "); Serial.println(WiFi.localIP());
             Serial.println("Gateway IP address: "); Serial.println(WiFi.gatewayIP());
@@ -209,6 +225,7 @@ void Wifi_Connect(){
         }
         else {
             Serial.println("WiFi connection failed! ");
+            digitalWrite(LED_BUILTIN,LOW);
             Serial.println("Retrying...");
             WiFi.disconnect();
             delay(50);
@@ -234,28 +251,26 @@ float get_ultra_data(){
   return distance;
 }
 void Bin1_Open() {
-  for (int pos = 0; pos <= 90; pos += 1) {
-    // in steps of 1 degree
-    Bin_1.write(pos);
-    delay(15); // waits 15ms to reach the position
-  }
+    for(int i=0;i<=degree;i++){
+        Bin_1.write(i);
+        delay(10);
+    }
 }
 void Bin2_Open() {
-  for (int pos = 0; pos <= 90; pos += 1) {
-    // in steps of 1 degree
-    Bin_2.write(pos);
-    delay(15); // waits 15ms to reach the position
-  }
+    for(int i=0;i<=degree;i++){
+        Bin_2.write(i);
+        delay(10);
+    }
 }
 void Bin1_Close() {
-  for (int pos = 90; pos >= 0; pos -= 1) {
-    Bin_1.write(pos);
-    delay(15); // waits 15ms to reach the position
-  }
+    for(int i=degree;i>=0;i--){
+        Bin_1.write(i);
+        delay(10);
+    }
 }
 void Bin2_Close() {
-  for (int pos = 90; pos >= 0; pos -= 1) {
-    Bin_2.write(pos);
-    delay(15); // waits 15ms to reach the position
-  }
+    for(int i=degree;i>=0;i--){
+        Bin_2.write(i);
+        delay(10);
+    }
 }
