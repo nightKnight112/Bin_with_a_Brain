@@ -1,5 +1,5 @@
 // Clean Wifi scanning and connection code
-// 03.05.2023
+// 16.05.2023
 
 #include<WiFi.h>
 #include<Adafruit_MQTT.h>
